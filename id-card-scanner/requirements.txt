@@ -1,0 +1,8 @@
+flask
+celery
+numpy
+opencv-contrib-python==4.5.1.48
+pandas
+pillow
+pytesseract
+textdistance
