@@ -1,7 +1,9 @@
 flask
 celery
 numpy
-opencv-contrib-python==4.5.1.48
+tensorflow
+keras
+opencv-contrib-python
 pandas
 pillow
 pytesseract
