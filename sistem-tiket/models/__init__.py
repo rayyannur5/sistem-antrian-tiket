@@ -1,4 +1,4 @@
-from .model import User, Ticket, TicketHold
+from .model import User, Ticket, TicketHold, Transaction
 from .extensions import db
 
-__all__ = ["User", "Ticket", "TicketHold", "db"]
+__all__ = ["User", "Ticket", "TicketHold", "Transaction", "db"]

@@ -1,10 +1,11 @@
 # service1/app.py
 from flask import Flask, request, jsonify
-from celery import Celery
 import os
-from models import User, Ticket, TicketHold, db
+from models import User, Ticket, TicketHold, Transaction, db
 from datetime import datetime, timedelta
 import uuid
+import pika
+import json
 
 app = Flask(__name__)
 
@@ -13,12 +14,12 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 
-# Configure Celery
-celery = Celery(
-    app.name,
-    broker=os.getenv("CELERY_BROKER_URL"),
-    backend=os.getenv("CELERY_RESULT_BACKEND")
-)
+def publish_generate_pdf(message):
+    connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
+    channel = connection.channel()
+    channel.exchange_declare(exchange='generate_pdf', exchange_type='fanout')
+    channel.basic_publish(exchange='generate_pdf', routing_key='', body=message)
+    connection.close()
 
 
 @app.route('/get_id', methods=['POST'])
@@ -87,14 +88,25 @@ def purchase():
     # Reduce ticket stock
     ticket.stock -= 1
     db.session.delete(ticket_hold)
+
+    transaction = Transaction(created_at=datetime.now(), user_id=ticket_hold.user_id, ticket_id=ticket_hold.ticket_id)
+    db.session.add(transaction)
+
     db.session.commit()
+
+    user = User.query.get(ticket_hold.user_id)
+
+    data_transaction = json.dumps({"email": user.email, "transaction": transaction.id})
+
+    publish_generate_pdf(data_transaction)
 
     return jsonify({
         'message': 'Purchase successful',
         'ticket': {
             'id': ticket.id,
             'name': ticket.name,
-            'remaining_stock': ticket.stock
+            'remaining_stock': ticket.stock,
+            'transcation': transaction.id
         }
     }), 200
 

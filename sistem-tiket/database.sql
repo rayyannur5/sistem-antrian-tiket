@@ -39,7 +39,7 @@ CREATE TABLE Transaction (
 
 -- Insert default users
 INSERT INTO User (name, email) VALUES
-('Alice', 'alice@example.com'),
+('Rayyan', 'rayyannur5@gmail.com'),
 ('Bob', 'bob@example.com');
 
 -- Insert default tickets
