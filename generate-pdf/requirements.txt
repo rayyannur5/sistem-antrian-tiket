@@ -1,2 +1,5 @@
 pika
 celery
+fpdf
+qrcode
+pillow

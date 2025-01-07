@@ -23,6 +23,10 @@ celery = Celery(
     backend=os.getenv("CELERY_RESULT_BACKEND")
 )
 
+celery.conf.task_routes = {
+    'app.process_scan': {'queue': 'card_scanner_worker'},
+}
+
 
 @app.route('/scan', methods=['POST'])
 def scan_id():
@@ -36,12 +40,12 @@ def scan_id():
         
         file_bytes = image.read()
 
-        task = process_scan.apply_async()
+        task = process_scan.apply_async(args=[file_bytes])
         return jsonify({'task_id': task.id}), 202
 
 
 @celery.task
-def process_scan():
+def process_scan(file_bytes):
 
     start_time = time.time()
     try:

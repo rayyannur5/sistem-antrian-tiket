@@ -48,6 +48,20 @@ services:
       - "5002:5002"
     depends_on:
       - rabbitmq
+    volumes:
+      - shared-storage:/app/shared
+
+  send-email:
+    build: ./send-email
+    environment:
+      - CELERY_BROKER_URL=amqp://rabbitmq
+      - CELERY_RESULT_BACKEND=rpc://
+    ports:
+      - "5003:5003"
+    depends_on:
+      - rabbitmq
+    volumes:
+      - shared-storage:/app/shared
 
   celery_card_scanner_worker:
     build: ./id-card-scanner
@@ -60,12 +74,26 @@ services:
 
   celery_generate_pdf_worker:
     build: ./generate-pdf
-    command: celery -A generatePdf.celery worker --loglevel=info 
+    command: celery -A generatePdf.celery worker --loglevel=info -Q generate_pdf_worker
     environment:
       - CELERY_BROKER_URL=amqp://rabbitmq
       - CELERY_RESULT_BACKEND=rpc://
     depends_on:
       - rabbitmq
+    volumes:
+      - shared-storage:/app/shared
+
+  celery_send_email_worker:
+    build: ./send-email
+    command: celery -A sendEmail.celery worker --loglevel=info -Q send_email_worker
+    environment:
+      - CELERY_BROKER_URL=amqp://rabbitmq
+      - CELERY_RESULT_BACKEND=rpc://
+    depends_on:
+      - rabbitmq
+    volumes:
+      - shared-storage:/app/shared
 
 volumes:
   mysql_data:
+  shared-storage:

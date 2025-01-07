@@ -17,8 +17,8 @@ db.init_app(app)
 def publish_generate_pdf(message):
     connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
     channel = connection.channel()
-    channel.exchange_declare(exchange='generate_pdf', exchange_type='fanout')
-    channel.basic_publish(exchange='generate_pdf', routing_key='', body=message)
+    # channel.exchange_declare(exchange='generate_pdf', exchange_type='fanout')
+    channel.basic_publish(exchange='generate_pdf', routing_key='generate_pdf_worker', body=message)
     connection.close()
 
 
@@ -59,6 +59,7 @@ def get_id():
 def purchase():
     data = request.json
     hold_id = data.get('id')
+    nik = data.get('nik')
 
     if not hold_id:
         return jsonify({
@@ -96,7 +97,7 @@ def purchase():
 
     user = User.query.get(ticket_hold.user_id)
 
-    data_transaction = json.dumps({"email": user.email, "transaction": transaction.id})
+    data_transaction = json.dumps({"email": user.email, "name": user.name, "event_name": ticket.name, "transaction": transaction.id, "nik": nik})
 
     publish_generate_pdf(data_transaction)
 
